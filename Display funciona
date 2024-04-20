@@ -1,0 +1,61 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <RTClib.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
+
+RTC_DS3231 rtc;
+
+void setup() {
+  Serial.begin(9600);
+
+  // Inicializa o display OLED
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  display.clearDisplay();
+  
+  // Inicializa o RTC DS3231
+  if (!rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+  
+  // Verifica se o RTC está funcionando corretamente
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, let's set the time!");
+
+    // Definir data e hora manualmente
+    rtc.adjust(DateTime(2024, 4, 17, 15, 30, 0)); // Ano, Mês, Dia, Hora, Minuto, Segundo
+  }
+
+  display.dim(false); // Ajusta o brilho do display
+}
+
+void loop() {
+  DateTime now = rtc.now(); // Lê a data e hora atual
+
+  display.clearDisplay();
+  display.setTextSize(2); // Tamanho do texto
+  display.setTextColor(WHITE); // Cor do texto
+  display.setCursor(0,0);
+
+  // Formata e exibe a hora e minuto
+  if (now.hour() < 10) {
+    display.print("0");
+  }
+  display.print(now.hour(), DEC);
+  display.print(':');
+  if (now.minute() < 10) {
+    display.print("0");
+  }
+  display.print(now.minute(), DEC);
+  display.display(); // Atualiza o display com tudo que foi escrito nele
+
+  delay(1000); // Espera um segundo para atualizar o display novamente
+}
