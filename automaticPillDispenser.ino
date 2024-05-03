@@ -10,9 +10,11 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
 RTC_DS3231 rtc;
 Servo servo1, servo2, servo3;
+int buzzerPin = 2; 
 
 void setup() {
   Serial.begin(9600);
+  pinMode(buzzerPin, OUTPUT);
 
   // Inicializa o display OLED
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -31,8 +33,10 @@ void setup() {
   if (rtc.lostPower()) {
     Serial.println("RTC lost power, let's set the time!");
     // Definir data e hora especificamente
-    rtc.adjust(DateTime(2024, 4, 17, 10, 0, 0)); // ano, mês, dia, hora, minuto, segundo
+    rtc.adjust(DateTime(2024, 4, 17, 24, 0, 0)); // ano, mês, dia, hora, minuto, segundo
   }
+
+  // rtc.adjust(DateTime(2024, 4, 17, 10, 46, 0)); // ano, mês, dia, hora, minuto, segundo
 
   servo1.attach(9);
   servo2.attach(10);
@@ -63,27 +67,41 @@ void loop() {
 
   delay(1000); // Espera um segundo para atualizar o display novamente
 
+  //display.clearDisplay();
+  //display.setCursor(0,0); // Posiciona o cursor
+  //display.print("");
+  //display.display(); 
+
+  //delay(2000);
+
  
   // Checa se o minuto atual é um múltiplo de 10
-  if (now.minute() % 1 == 0 && now.second() == 0) {
+  if (now.minute() % 2 == 0 && now.second() == 0) {
+   
+    delay(1000); 
     moveServos();  // Move os servos se a condição for verdadeira
+    buzzer();
+    display.clearDisplay();
+    display.setCursor(0,0); // Posiciona o cursor
+    display.print("Ta na hora do viagra");
+    display.display(); 
+
+    delay(5000);
   }
 
   // Atualização do display de tempo a cada segundo
-  if (millis() % 1000 < 50) {  // Simples debounce para evitar múltiplas impressões
-    Serial.print(now.year(), DEC);
-    Serial.print('/');
-    Serial.print(now.month(), DEC);
-    Serial.print('/');
-    Serial.print(now.day(), DEC);
-    Serial.print(" ");
-    Serial.print(now.hour(), DEC);
-    Serial.print(':');
-    Serial.print(now.minute(), DEC);
-    Serial.print(':');
-    Serial.print(now.second(), DEC);
-    Serial.println();
+ 
+}
+void buzzer(){
+    for (int i = 0; i < 2; i++) {
+    digitalWrite(buzzerPin, HIGH); // Liga o buzzer
+    delay(3000);                   // Mantém o buzzer ligado por 3 segundos
+    digitalWrite(buzzerPin, LOW);  // Desliga o buzzer
+    delay(1000);                   // Espera 1 segundo antes de repetir
   }
+
+  // Ajuste este delay para quanto tempo você quer esperar antes de repetir todo o processo
+  delay(10000);  
 }
 
 void moveServos() {
