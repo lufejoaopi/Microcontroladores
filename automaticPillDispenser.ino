@@ -1,4 +1,4 @@
-#include <Wire.h>
+  #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <RTClib.h>
@@ -9,12 +9,14 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
 RTC_DS3231 rtc;
-Servo servo1, servo2, servo3;
-int buzzerPin = 2; 
+Servo servo1, servo2;
+int buzzerPin = 2;
+int ledPin = 13;
 
 void setup() {
   Serial.begin(9600);
   pinMode(buzzerPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);  
 
   // Inicializa o display OLED
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -33,88 +35,86 @@ void setup() {
   if (rtc.lostPower()) {
     Serial.println("RTC lost power, let's set the time!");
     // Definir data e hora especificamente
-    rtc.adjust(DateTime(2024, 4, 17, 24, 0, 0)); // ano, mês, dia, hora, minuto, segundo
+    rtc.adjust(DateTime(2024, 4, 17, 12, 0, 50)); // ano, mês, dia, hora, minuto, segundo
   }
 
-  // rtc.adjust(DateTime(2024, 4, 17, 10, 46, 0)); // ano, mês, dia, hora, minuto, segundo
+  rtc.adjust(DateTime(2024, 4, 17, 12, 0, 50)); // ano, mês, dia, hora, minuto, segundo
 
   servo1.attach(9);
   servo2.attach(10);
-  servo3.attach(12);
+
+  servo1.write(0);
+  servo2.write(90);
+  delay(1000);
 
   display.dim(false); // Ajusta o brilho do display
 }
 
 void loop() {
-  DateTime now = rtc.now(); // Lê a data e hora atual
+  DateTime now = rtc.now();
 
+  // Verifica se a hora é igual a 24 e, se for, define a hora como 0
+  if (now.hour() == 24) {
+    rtc.adjust(DateTime(now.year(), now.month(), now.day(), 0, now.minute(), now.second()));
+  }
+  
   display.clearDisplay();
-  display.setTextSize(2); // Define o tamanho do texto
-  display.setTextColor(WHITE); // Define a cor do texto
-  display.setCursor(0,0); // Posiciona o cursor
-
-  // Formata e exibe a hora e o minuto
+  display.setTextSize(2); 
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(16, 40);
   if (now.hour() < 10) {
-    display.print("0");
+    display.print("0"); // Adiciona um zero à esquerda se a hora for menor que 10
   }
-  display.print(now.hour(), DEC);
-  display.print(':');
+  display.print(now.hour());
+  display.print(":");
   if (now.minute() < 10) {
-    display.print("0");
+    display.print("0"); // Adiciona um zero à esquerda se o minuto for menor que 10
   }
-  display.print(now.minute(), DEC);
-  display.display(); // Mostra o que foi escrito no display
+  display.print(now.minute());
+  display.print(":");
+  if (now.second() < 10) {
+    display.print("0"); // Adiciona um zero à esquerda se o segundo for menor que 10
+  }
+  display.println(now.second());
+  display.display();
+  
+  delay(1000);
 
-  delay(1000); // Espera um segundo para atualizar o display novamente
+  // Checa se o segundo atual é igual a 0
+  if (now.second() == 0) {
 
-  //display.clearDisplay();
-  //display.setCursor(0,0); // Posiciona o cursor
-  //display.print("");
-  //display.display(); 
-
-  //delay(2000);
-
- 
-  // Checa se o minuto atual é um múltiplo de 10
-  if (now.minute() % 2 == 0 && now.second() == 0) {
-   
-    delay(1000); 
-    moveServos();  // Move os servos se a condição for verdadeira
-    buzzer();
+    digitalWrite(ledPin, HIGH);
     display.clearDisplay();
-    display.setCursor(0,0); // Posiciona o cursor
-    display.print("Ta na hora do remédio");
-    display.display(); 
-
-    delay(5000);
+    display.setCursor(0,0); 
+    display.print("Dispensando...");
+    display.display();
+    buzzer();
+    moveServos();
+    digitalWrite(ledPin, LOW);
+    delay(1000);
   }
-
-  // Atualização do display de tempo a cada segundo
- 
 }
 void buzzer(){
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 1; i++) {
     digitalWrite(buzzerPin, HIGH); // Liga o buzzer
-    delay(3000);                   // Mantém o buzzer ligado por 3 segundos
+    delay(1000);                   // Mantém o buzzer ligado por 3 segundos
     digitalWrite(buzzerPin, LOW);  // Desliga o buzzer
     delay(1000);                   // Espera 1 segundo antes de repetir
   }
 
   // Ajuste este delay para quanto tempo você quer esperar antes de repetir todo o processo
-  delay(10000);  
+  delay(1000);  
 }
 
 void moveServos() {
   // Ativa cada servo sequencialmente
   servo1.write(90);
-  delay(1000);
-  servo2.write(90);
-  delay(1000);
-  servo3.write(90);
-  delay(1000);
-
-  // Retorna cada servo para a posição inicial
+  delay(500);
   servo1.write(0);
+  delay(500);
+
   servo2.write(0);
-  servo3.write(0);
+  delay(500);
+  servo2.write(90);
+  delay(500);
 }
