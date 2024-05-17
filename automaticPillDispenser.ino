@@ -83,7 +83,7 @@ void loop() {
     buzzer();
     display.clearDisplay();
     display.setCursor(0,0); // Posiciona o cursor
-    display.print("Ta na hora do viagra");
+    display.print("Ta na hora do remédio");
     display.display(); 
 
     delay(5000);
